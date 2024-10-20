@@ -103,7 +103,7 @@ class Autocol:
 for line in iter(input.readline, ''):
     line = line.rstrip('\\n')
     cells = line.split(separator, len(self.headers)-1)
-{python}
+%s
     if parser:
         cells = parser(line, cells, self.headers, self.hn, live)
     if cells is None:
@@ -116,7 +116,7 @@ for line in iter(input.readline, ''):
             #if less: # bug less +F
             #    print('\\n' * os.get_terminal_size(sys.__stdout__.fileno()).lines, file=out)
         self.printline(cells, out)
-"""
+""" %(python)
         if live and less:
             os.environ['LESS'] = ''
             cmd = './less -RSX +F --shift=10 -~ -j 2 --no-search-headers --header 1,'+str(sum(self.maxwidth[:fixcolumns])+(1+len(self.padding))*(fixcolumns))
