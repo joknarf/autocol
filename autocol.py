@@ -86,7 +86,7 @@ class Autocol:
         self.maxwidth = [len(c) for c in self.headers]
         self.linenum = 0
         self.linecolors = [Back.BLACK, "\033[48;5;234m"]
-        self.columncolors = ["\033[48;5;237m"]
+        self.columncolors = ["\033[48;5;235m"]
         for i in range(len(self.columncolors), len(self.headers)):
             self.columncolors.append('')
         self.padding = padding
@@ -142,12 +142,19 @@ for line in iter(input.readline, ''):
                 else:
                     self.align[i] = "-"
             
-    def colorize(self, cell, linecolor):
+    def colorize(self, cell, linecolor, column):
         c = cell.strip()
+        if self.headers[column] in self.textcolors and c in self.textcolors[self.headers[column]]:
+            return self.textcolors[self.headers[column]][c] + cell + Fore.RESET + linecolor
         if c in self.textcolors:
             return self.textcolors[c] + cell + Fore.RESET + linecolor
-        for p,pc in self.patterncolors.items():
-            cell = re.sub(f'({p})', pc + r'\1' + Fore.RESET + linecolor, cell)
+        if self.headers[column] in self.patterncolors:
+            patterncolors = self.patterncolors[self.headers[column]]
+        else:
+            patterncolors = self.patterncolors
+        for p,pc in patterncolors.items():
+            if isinstance(pc, str):
+                cell = re.sub(f'({p})', pc + r'\1' + Fore.RESET + linecolor, cell)
         return cell
     
     def printline(self, cells, out=sys.stdout):
@@ -158,7 +165,7 @@ for line in iter(input.readline, ''):
             if self.linenum == 0:
                 cell = self.titlecolors + self.padding + f"%{self.align[i]}{self.maxwidth[i]}s " % cell
             else:
-                cell = self.colorize(self.padding + f"%{self.align[i]}{self.maxwidth[i]}s " % cell, self.linecolors[self.linenum%2])
+                cell = self.colorize(self.padding + f"%{self.align[i]}{self.maxwidth[i]}s " % cell, self.linecolors[self.linenum%2], i)
                 if self.columncolors[i]:
                     cell = self.columncolors[i] + cell + self.linecolors[self.linenum%2]
             print(cell, end="", file=out, flush=True)
@@ -195,6 +202,7 @@ def initcolors(colors=None):
         return {}
     tcolors = {}
     for tc in colors:
+        tc = tc.encode('unicode_escape').decode()
         tcol = tc.split(':')
         if len(tcol)==4:
             item = tcol.pop(0)
@@ -204,7 +212,6 @@ def initcolors(colors=None):
             tcolors[item][tcol[0]] = col
         else:
             tcolors[tcol[0]] = eval("Back." + (tcol[1].upper() or 'NONE')) + eval("Fore."+ (tcol[2].upper() or 'NONE'))
-    print(tcolors)
     return tcolors
 
 def autocol(args, out=sys.stdout, input=sys.stdin, parser=None):
