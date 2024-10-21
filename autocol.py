@@ -63,7 +63,7 @@ class Autocol:
               less=False, 
               parser=None, 
               python='',  
-              titlecolors=Fore.WHITE + Back.BLUE,
+              titlecolors=Fore.LIGHTWHITE + Back.LIGHTBLACK,
               align=None,
               textcolors=None,
               patterncolors=None,
