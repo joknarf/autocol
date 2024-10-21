@@ -36,8 +36,8 @@ print(Style.wrapoff, end='')
 
 class Autocol:
     """
-    textcolors = [ {"text":"colors"}, ]
-    textccolors = [ {"colname": [ {text:colors}, {text:colors} ]}] ?
+    textcolors = {"text":"colors", "text":"colors}
+    textccolors = {"colname": {text:colors, {text:colors} }
     """
     def __del__(self):
         global colors
@@ -143,9 +143,9 @@ for line in iter(input.readline, ''):
                     self.align[i] = "-"
             
     def colorize(self, cell, linecolor):
-        for t,tc in self.textcolors.items():
-            if cell.strip() == t:
-                return tc + cell + Fore.RESET + linecolor
+        c = cell.strip()
+        if c in self.textcolors:
+            return self.textcolors[c] + cell + Fore.RESET + linecolor
         for p,pc in self.patterncolors.items():
             cell = re.sub(f'({p})', pc + r'\1' + Fore.RESET + linecolor, cell)
         return cell
@@ -196,7 +196,15 @@ def initcolors(colors=None):
     tcolors = {}
     for tc in colors:
         tcol = tc.split(':')
-        tcolors[tcol[0]] = eval("Back." + (tcol[1].upper() or 'NONE')) + eval("Fore."+ (tcol[2].upper() or 'NONE'))
+        if len(tcol)==4:
+            item = tcol.pop(0)
+            if not item in tcolors:
+                tcolors[item] = {}
+            col = eval("Back." + (tcol[1].upper() or 'NONE')) + eval("Fore."+ (tcol[2].upper() or 'NONE'))
+            tcolors[item][tcol[0]] = col
+        else:
+            tcolors[tcol[0]] = eval("Back." + (tcol[1].upper() or 'NONE')) + eval("Fore."+ (tcol[2].upper() or 'NONE'))
+    print(tcolors)
     return tcolors
 
 def autocol(args, out=sys.stdout, input=sys.stdin, parser=None):
