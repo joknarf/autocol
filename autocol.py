@@ -3,6 +3,7 @@ import os
 import sys
 import re
 from subprocess import run, Popen, PIPE, DEVNULL
+from textwrap import indent
 #from tabula import tabulatecol #WARN print ends with RESET COLORS
 #from colorama import Back#, Fore
 
@@ -45,7 +46,7 @@ class Autocol:
 
     def parsecmd(self, cmd, **kwargs):
         try:
-            with Popen(cmd, shell=True, stdout=PIPE, stdin=DEVNULL, encoding='utf-8', bufsize=0) as proc:
+            with Popen(" ".join(cmd), shell=True, stdout=PIPE, stdin=DEVNULL, encoding='utf-8', bufsize=0) as proc:
                 kwargs['input'] = proc.stdout
                 self.parse(**kwargs)
             return self
@@ -103,7 +104,7 @@ class Autocol:
 for line in iter(input.readline, ''):
     line = line.rstrip('\\n')
     cells = line.split(separator, len(self.headers)-1)
-{python}
+{indent(python,"    ")}
     if parser:
         cells = parser(line, cells, self.headers, self.hn, live)
     if cells is None:
