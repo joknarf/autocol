@@ -254,7 +254,7 @@ def main(args):
     parser.add_argument('-a', '--align', nargs='*')
     parser.add_argument('-l', '--live', action='store_true')
     parser.add_argument('-H', '--headers', nargs='*')
-    parser.add_argument('-c', '--cmd', default='' )
+    parser.add_argument('cmd', nargs="*")
     args = parser.parse_args()
     autocol(args, sys.stdout)
     sys.exit()
