@@ -86,7 +86,7 @@ class Autocol:
         self.align = [align[i] if len(self.cust_align)>i else '-' for i,h in enumerate(self.headers)]
         self.maxwidth = [len(c) for c in self.headers]
         self.linenum = 0
-        self.linecolors = [Back.BLACK, "\033[48;5;234m"]
+        self.linecolors = ["\033[48;5;234m", Back.BLACK]
         self.columncolors = ["\033[48;5;235m"]
         for i in range(len(self.columncolors), len(self.headers)):
             self.columncolors.append('')
