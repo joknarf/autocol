@@ -7,6 +7,7 @@ from textwrap import indent
 #from tabula import tabulatecol #WARN print ends with RESET COLORS
 #from colorama import Back#, Fore
 
+TITLE_SYMS = os.environ.get("autocol_syms") or "" #" " "   "
 CSI = "\033["
 COLORS = ('BLACK', 'RED', 'GREEN', 'YELLOW', 'BLUE', 'MAGENTA', 'CYAN', 'WHITE')
 
@@ -22,6 +23,11 @@ class ForeG:
             setattr(self, col, CSI + str(i+30) +'m')
             setattr(self, 'LIGHT' + col, CSI + str(i+90) +'m')
 
+    def toback(self, color):
+        col = int(color.split("[")[1][:-1])
+        return CSI + str(col + 10) + "m"
+
+
 class BackG:
     RESET = CSI + '49' + 'm'
     NONE = ''
@@ -29,6 +35,11 @@ class BackG:
         for i,col in enumerate(COLORS):
             setattr(self, col, CSI + str(i+40) +'m')
             setattr(self, 'LIGHT' + col, CSI + str(i+100) +'m')
+    
+    def tofore(self, color):
+        col = int(color.split("[")[1][:-1])
+        return CSI + str(col - 10) + "m"
+
 
 Fore = ForeG()
 Back = BackG()
@@ -64,7 +75,7 @@ class Autocol:
               less=False, 
               parser=None, 
               python='',  
-              titlecolors=Fore.LIGHTWHITE + Back.LIGHTBLACK,
+              titlecolors=(Fore.LIGHTWHITE, Back.LIGHTBLACK),
               align=None,
               textcolors=None,
               patterncolors=None,
@@ -160,11 +171,21 @@ for line in iter(input.readline, ''):
     
     def printline(self, cells, out=sys.stdout):
         print(self.linecolors[self.linenum%2], file=out, flush=True, end="")
+        tcolors = "".join(self.titlecolors)
+        symcolor = Back.tofore(self.titlecolors[1])
+        syms = TITLE_SYMS
+        symcol0 = tcolors if syms[0] == " " else symcolor
+        symcol2 = tcolors if syms[2] == " " else symcolor + Back.RESET
         for i,cell in enumerate(cells):
             if i in self.skipcolumns:
                 continue
             if self.linenum == 0:
-                cell = self.titlecolors + self.padding + f"%{self.align[i]}{self.maxwidth[i]}s " % cell
+                if i == 0:
+                    cell = symcol0 + syms[0] + tcolors + self.padding[1:] + f"%{self.align[i]}{self.maxwidth[i]}s" % cell + Fore.BLACK + syms[1] # 
+                elif i == len(self.headers)-1:
+                    cell = tcolors + self.padding + f"%{self.align[i]}{self.maxwidth[i]}s" % cell + symcol2 + syms[2] #"" 
+                else:    
+                    cell = tcolors + self.padding + f"%{self.align[i]}{self.maxwidth[i]}s" % cell + Fore.BLACK + syms[1]
             else:
                 cell = self.colorize(self.padding + f"%{self.align[i]}{self.maxwidth[i]}s " % cell, self.linecolors[self.linenum%2], i)
                 if self.columncolors[i]:
