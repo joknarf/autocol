@@ -2,12 +2,14 @@
 import os
 import sys
 import re
+import shlex
 from subprocess import run, Popen, PIPE, DEVNULL
 from textwrap import indent
 #from tabula import tabulatecol #WARN print ends with RESET COLORS
 #from colorama import Back#, Fore
 
-TITLE_SYMS = os.environ.get("autocol_syms") or "" #" " "   "
+TITLE_SYMS = os.environ.get("autocol_syms") or "" #" " "   " "⎹" ⎥ ⎹   
+TITLE_SYMS = os.environ.get("autocol_syms") or "⎹"
 CSI = "\033["
 COLORS = ('BLACK', 'RED', 'GREEN', 'YELLOW', 'BLUE', 'MAGENTA', 'CYAN', 'WHITE')
 
@@ -57,7 +59,7 @@ class Autocol:
 
     def parsecmd(self, cmd, **kwargs):
         try:
-            with Popen(" ".join(cmd), shell=True, stdout=PIPE, stdin=DEVNULL, encoding='utf-8', bufsize=0) as proc:
+            with Popen(cmd, stdout=PIPE, stdin=DEVNULL, encoding='utf-8', bufsize=0) as proc:
                 kwargs['input'] = proc.stdout
                 self.parse(**kwargs)
             return self
@@ -88,10 +90,12 @@ class Autocol:
         self.skipcolumns = skipcolumns or []
         self.textcolors = textcolors or {}
         self.patterncolors = patterncolors or {}
+        if not separator:
+            separator = r"[ \t]+"
         if headers:
             self.headers = headers
         else:
-            self.headers = input.readline().rstrip('\n').split(separator)
+            self.headers = re.split(separator, input.readline().strip())
         self.hn = {h.strip():i for i,h in enumerate(self.headers)}
         self.cust_align = align or []
         self.align = [align[i] if len(self.cust_align)>i else '-' for i,h in enumerate(self.headers)]
@@ -113,9 +117,12 @@ class Autocol:
         self.data = []
         py_code = f"""
 for line in iter(input.readline, ''):
-    line = line.rstrip('\\n')
-    cells = line.split(separator, len(self.headers)-1)
+    line = line.strip()
+    oline = line
+    cells = re.split(separator, line, len(self.headers)-1)
 {indent(python,"    ")}
+    if line != oline:
+        cells = re.split(separator, line, len(self.headers)-1)
     if parser:
         cells = parser(line, cells, self.headers, self.hn, live)
     if cells is None:
@@ -130,10 +137,11 @@ for line in iter(input.readline, ''):
         self.printline(cells, out)
 """
         if live and less:
-            os.environ['LESS'] = ''
+            os.environ["LESS"] = ""
+            os.environ["LESSCHARSET"] = "utf-8"
             cmd = './less -RSX +F --shift=10 -~ -j 2 --no-search-headers --header 1,'+str(sum(self.maxwidth[:fixcolumns])+(1+len(self.padding))*(fixcolumns))
             try:
-                with Popen(cmd.split(), encoding='utf-8', stdin=PIPE, bufsize=0, close_fds=True) as proc:
+                with Popen(shlex.split(cmd), encoding='utf-8', stdin=PIPE, bufsize=0, close_fds=True) as proc:
                     out = proc.stdin
                     exec(py_code)
             except KeyboardInterrupt:
@@ -211,9 +219,10 @@ for line in iter(input.readline, ''):
 
     def printless(self):
         os.environ['LESS'] = ''
+        os.environ['LESSCHARSET'] = "utf-8"
         cmd = './less -RSXKF --shift=10 -~ -j 2 --no-search-headers --header 1,'+str(sum(self.maxwidth[:self.fixcolumns])+(1+len(self.padding))*(self.fixcolumns))
         try:
-            with Popen(cmd.split(), encoding='utf-8', stdin=PIPE, close_fds=False) as proc:
+            with Popen(shlex.split(cmd), encoding='utf-8', stdin=PIPE, close_fds=False) as proc:
                 self.printout(out=proc.stdin)
         except KeyboardInterrupt:
             return
