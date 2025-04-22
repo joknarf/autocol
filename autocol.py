@@ -65,6 +65,8 @@ class Autocol:
             return self
         except:
             #self.out.close()
+            print("Error: ", cmd, file=sys.stderr)
+            sys.exit(1)
             return self
     
     def parse(self,
